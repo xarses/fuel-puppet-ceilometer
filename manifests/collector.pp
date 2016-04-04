@@ -28,6 +28,7 @@ class ceilometer::collector (
   $package_ensure = 'present',
   $udp_address    = '0.0.0.0',
   $udp_port       = '4952',
+  $collector_workers  = undef,
 ) {
 
   include ::ceilometer::params
@@ -43,6 +44,7 @@ class ceilometer::collector (
   ceilometer_config {
     'collector/udp_address' : value => $udp_address;
     'collector/udp_port'    : value => $udp_port;
+    'collector/workers'     : value => $collector_workers;
   }
 
   Package[$::ceilometer::params::collector_package_name] -> Service['ceilometer-collector']

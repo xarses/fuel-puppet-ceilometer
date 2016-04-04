@@ -92,6 +92,7 @@ class ceilometer(
   $http_timeout          = '600',
   $event_time_to_live    = '-1',
   $metering_time_to_live = '-1',
+  $alarm_history_time_to_live = '-1',
   $metering_secret     = false,
   $notification_topics = ['notifications'],
   $package_ensure      = 'present',
@@ -279,6 +280,7 @@ class ceilometer(
     'DEFAULT/notification_topics'    : value => join($notification_topics, ',');
     'database/event_time_to_live'    : value => $event_time_to_live;
     'database/metering_time_to_live' : value => $metering_time_to_live;
+    'database/alarm_history_time_to_live' : value => $alarm_history_time_to_live;
   }
 
   # Log configuration

@@ -44,11 +44,11 @@
 #    Password to authenticate with.
 #    Mandatory.
 #
-# [*keystone_auth_uri*]
+# [*auth_uri*]
 #   (optional) Public Identity API endpoint.
 #   Defaults to 'false'.
 #
-# [*keystone_identity_uri*]
+# [*identity_uri*]
 #   (optional) Complete admin Identity API endpoint.
 #   Defaults to: false
 #
@@ -71,15 +71,14 @@ class ceilometer::api (
   $keystone_user              = 'ceilometer',
   $keystone_tenant            = 'services',
   $keystone_password          = false,
-  $keystone_auth_uri          = false,
-  $keystone_identity_uri      = false,
+  $auth_uri                   = undef,
+  $identity_uri               = undef,
   $host                       = '0.0.0.0',
   $port                       = '8777',
+  $api_workers                = undef,
   # DEPRECATED PARAMETERS
-  $keystone_host              = '127.0.0.1',
-  $keystone_port              = '35357',
-  $keystone_auth_admin_prefix = false,
-  $keystone_protocol          = 'http',
+  $keystone_auth_uri          = undef,
+  $keystone_identity_uri      = undef,
 ) {
 
   include ::ceilometer::params
@@ -124,77 +123,26 @@ class ceilometer::api (
     'keystone_authtoken/admin_password'    : value => $keystone_password, secret => true;
     'api/host'                             : value => $host;
     'api/port'                             : value => $port;
-  }
-
-  # if both auth_uri and identity_uri are set we skip these deprecated settings entirely
-  if !$keystone_auth_uri or !$keystone_identity_uri {
-
-    if $keystone_auth_admin_prefix {
-      validate_re($keystone_auth_admin_prefix, '^(/.+[^/])?$')
-      warning('The keystone_auth_admin_prefix parameter is deprecated. Please use keystone_auth_uri and keystone_identity_uri instead.')
-      ceilometer_config {
-        'keystone_authtoken/auth_admin_prefix': value => $keystone_auth_admin_prefix;
-      }
-    } else {
-      ceilometer_config {
-        'keystone_authtoken/auth_admin_prefix': ensure => absent;
-      }
-    }
-
-    if $keystone_host {
-      warning('The keystone_host parameter is deprecated. Please use keystone_auth_uri and keystone_identity_uri instead.')
-      ceilometer_config {
-        'keystone_authtoken/auth_host': value => $keystone_host;
-      }
-    } else {
-      ceilometer_config {
-        'keystone_authtoken/auth_host': ensure => absent;
-      }
-    }
-
-    if $keystone_port {
-      warning('The keystone_port parameter is deprecated. Please use keystone_auth_uri and keystone_identity_uri instead.')
-      ceilometer_config {
-        'keystone_authtoken/auth_port': value => $keystone_port;
-      }
-    } else {
-      ceilometer_config {
-        'keystone_authtoken/auth_port': ensure => absent;
-      }
-    }
-
-    if $keystone_protocol {
-      warning('The keystone_protocol parameter is deprecated. Please use keystone_auth_uri and keystone_identity_uri instead.')
-      ceilometer_config {
-        'keystone_authtoken/auth_protocol': value => $keystone_protocol;
-      }
-    } else {
-      ceilometer_config {
-        'keystone_authtoken/auth_protocol': ensure => absent;
-      }
-    }
-  } else {
-    ceilometer_config {
-      'keystone_authtoken/auth_host'         : ensure => absent;
-      'keystone_authtoken/auth_port'         : ensure => absent;
-      'keystone_authtoken/auth_protocol'     : ensure => absent;
-      'keystone_authtoken/auth_admin_prefix' : ensure => absent;
-    }
-  }
-
-  if $keystone_auth_uri {
-    $keystone_auth_uri_real = $keystone_auth_uri
-  } elsif $keystone_host and $keystone_protocol {
-    $keystone_auth_uri_real = "${keystone_protocol}://${keystone_host}:5000/"
+    'api/workers'                          : value => $api_workers;
   }
 
   ceilometer_config {
-    'keystone_authtoken/auth_uri': value => $keystone_auth_uri_real;
+    'keystone_authtoken/auth_host'         : ensure => absent;
+    'keystone_authtoken/auth_port'         : ensure => absent;
+    'keystone_authtoken/auth_protocol'     : ensure => absent;
+    'keystone_authtoken/auth_admin_prefix' : ensure => absent;
   }
 
-  if $keystone_identity_uri {
+  auth_uri_real = pick(auth_uri, keystone_auth_uri)
+  identity_uri_real = pick(identity_uri, keystone_identity_uri)
+
+  ceilometer_config {
+    'keystone_authtoken/auth_uri': value => $auth_uri_real;
+  }
+
+  if $identity_uri_real {
     ceilometer_config {
-      'keystone_authtoken/identity_uri': value => $keystone_identity_uri;
+      'keystone_authtoken/identity_uri': value => $identity_uri_real;
     }
   } else {
     ceilometer_config {

@@ -50,6 +50,7 @@ class ceilometer::agent::notification (
   $ack_on_event_error = true,
   $store_events       = false,
   $package_ensure     = 'present',
+  $notification_workers  = undef,
 ) {
 
   include ::ceilometer::params
@@ -86,6 +87,7 @@ class ceilometer::agent::notification (
   ceilometer_config {
     'notification/ack_on_event_error': value => $ack_on_event_error;
     'notification/store_events'      : value => $store_events;
+    'notification/workers'           : value => $notification_workers;
   }
 
 }
